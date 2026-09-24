@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}House Price Prediction{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div class="project-eyebrow">
+    <span class="bot bot-accent" aria-hidden="true">{% include "partials/robot.svg" %}</span>
+    House Price Prediction &middot; by Harshita Sharma
+  </div>
+  <h1>House Price Prediction</h1>
+  <p>Enter property details and get an estimated price from a Random Forest model trained on {{ "{:,}".format(metrics.rows) }} sample homes across {{ locations|length }} locations. Model hold-out performance: MAE {{ metrics.mae }} lakhs, R² {{ metrics.r2 }}.</p>
+</header>
+
+{% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+<form method="POST">
+  <div class="grid-3">
+    <div class="field-row">
+      <label for="location">Location</label>
+      <select id="location" name="location">
+        {% for loc in locations %}
+        <option value="{{ loc }}" {% if values.location == loc %}selected{% endif %}>{{ loc }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field-row">
+      <label for="location_score">Location score (1-10)</label>
+      <input type="number" id="location_score" name="location_score" min="1" max="10" step="0.1" value="{{ values.location_score }}">
+    </div>
+    <div class="field-row">
+      <label for="area_sqft">Area (sq ft)</label>
+      <input type="number" id="area_sqft" name="area_sqft" min="200" step="10" value="{{ values.area_sqft }}">
+    </div>
+    <div class="field-row">
+      <label for="bedrooms">Bedrooms</label>
+      <input type="number" id="bedrooms" name="bedrooms" min="1" max="10" value="{{ values.bedrooms }}">
+    </div>
+    <div class="field-row">
+      <label for="bathrooms">Bathrooms</label>
+      <input type="number" id="bathrooms" name="bathrooms" min="1" max="10" value="{{ values.bathrooms }}">
+    </div>
+    <div class="field-row">
+      <label for="age_years">Age of property (years)</label>
+      <input type="number" id="age_years" name="age_years" min="0" max="100" value="{{ values.age_years }}">
+    </div>
+    <div class="field-row">
+      <label for="distance_to_city_km">Distance to city center (km)</label>
+      <input type="number" id="distance_to_city_km" name="distance_to_city_km" min="0" step="0.1" value="{{ values.distance_to_city_km }}">
+    </div>
+  </div>
+  <button type="submit">Estimate price</button>
+</form>
+
+{% if prediction is not none %}
+<div class="result">
+  <div class="score-row">
+    <div class="score-number">₹{{ prediction }}L</div>
+    <div class="verdict">Estimated price (in lakhs INR) for the property described above.</div>
+  </div>
+
+  <div class="house-preview house-{{ furnishing.level }}">
+    <div class="house-art" aria-hidden="true">
+      <svg viewBox="0 0 220 150" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="118" width="220" height="32" class="hp-ground"/>
+        {% if furnishing.level == 'furnished' %}
+        <ellipse cx="34" cy="128" rx="16" ry="7" class="hp-bush"/>
+        <ellipse cx="190" cy="130" rx="14" ry="6" class="hp-bush"/>
+        <rect x="150" y="104" width="34" height="16" rx="2" class="hp-car-body"/>
+        <circle cx="159" cy="120" r="4" class="hp-car-wheel"/>
+        <circle cx="177" cy="120" r="4" class="hp-car-wheel"/>
+        {% endif %}
+        <polygon points="30,70 110,20 190,70" class="hp-roof"/>
+        <rect x="42" y="70" width="136" height="50" class="hp-wall"/>
+        <rect x="42" y="70" width="136" height="50" class="hp-wall-shade"/>
+        <rect x="96" y="90" width="28" height="30" rx="2" class="hp-door"/>
+        <circle cx="118" cy="106" r="1.6" class="hp-door-knob"/>
+        <rect x="56" y="82" width="24" height="20" rx="2" class="hp-window"/>
+        <rect x="140" y="82" width="24" height="20" rx="2" class="hp-window"/>
+        <line x1="68" y1="82" x2="68" y2="102" class="hp-window-frame"/>
+        <line x1="56" y1="92" x2="80" y2="92" class="hp-window-frame"/>
+        <line x1="152" y1="82" x2="152" y2="102" class="hp-window-frame"/>
+        <line x1="140" y1="92" x2="164" y2="92" class="hp-window-frame"/>
+        {% if furnishing.level in ('furnished', 'semi-furnished') %}
+        <rect x="53" y="80" width="6" height="22" class="hp-curtain"/>
+        <rect x="77" y="80" width="6" height="22" class="hp-curtain"/>
+        <rect x="137" y="80" width="6" height="22" class="hp-curtain"/>
+        <rect x="161" y="80" width="6" height="22" class="hp-curtain"/>
+        {% endif %}
+        {% if furnishing.level == 'furnished' %}
+        <rect x="60" y="86" width="16" height="12" class="hp-window-glow"/>
+        <rect x="144" y="86" width="16" height="12" class="hp-window-glow"/>
+        <rect x="20" y="110" width="10" height="10" class="hp-plant-pot"/>
+        <circle cx="25" cy="105" r="7" class="hp-plant-leaf"/>
+        {% endif %}
+      </svg>
+    </div>
+    <div class="house-meta">
+      <span class="house-chip">{{ furnishing.label }}</span>
+      <p>{{ furnishing.note }}</p>
+      <p class="house-disclaimer">Illustrative only - the model doesn't take furnishing as an input; this is a visual guess based on where the predicted price falls in the market.</p>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
